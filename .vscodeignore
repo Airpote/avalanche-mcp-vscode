@@ -1,6 +1,9 @@
-.vscode/**
-.vscode-test/**
-node_modules/**
-.gitignore
-*.vsix
 .git/**
+.gitignore
+.mcpregistry_*
+mcp-publisher
+mcp-publisher_*.tar.gz
+*.vsix
+node_modules/**
+.vscode/**
+server.json

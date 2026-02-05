@@ -1,8 +1,8 @@
 {
   "name": "avalanche-mcp",
-  "displayName": "Avalanche MCP Server",
+  "displayName": "Avalanche AVAX MCP",
   "description": "Avalanche (AVAX) MCP Server integration for VS Code - Access Avalanche blockchain documentation, search tools, and AI assistance for building on Avalanche L1s",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "Airpote",
   "icon": "images/icon.png",
   "repository": {

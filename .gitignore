@@ -4,3 +4,7 @@ node_modules/
 out/
 dist/
 .DS_Store
+.mcpregistry_*
+mcp-publisher
+mcp-publisher_*.tar.gz
+*.vsix
