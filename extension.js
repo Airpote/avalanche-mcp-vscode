@@ -7,13 +7,17 @@ const vscode = require('vscode');
  * for VS Code, enabling AI assistants to access Avalanche blockchain documentation
  * and development resources.
  * 
- * MCP Endpoint: https://build.avax.network/api/mcp
+ * Endpoints:
+ * - MCP Server: https://build.avax.network/api/mcp (JSON-RPC 2.0)
+ * - llms.txt: https://build.avax.network/llms.txt (documentation index)
+ * - Full docs: https://build.avax.network/llms-full.txt (complete documentation)
  * 
- * Available Tools:
+ * Available MCP Tools:
  * - avalanche_docs_search: Search documentation by query with optional source filter
  * - avalanche_docs_fetch: Get a specific page by URL path
  * - avalanche_docs_list_sections: List all sections with page counts
  * 
+ * Source: https://github.com/Airpote/avalanche-mcp-vscode
  * @see https://build.avax.network/docs/tooling/ai-llm
  */
 

@@ -1,113 +1,153 @@
-# Avalanche MCP Server for VS Code
+# MCP Registry
 
-![Avalanche Logo](images/icon.png)
+The MCP registry provides MCP clients with a list of MCP servers, like an app store for MCP servers.
 
-**Official Avalanche (AVAX) MCP Server integration for Visual Studio Code**
+[**📤 Publish my MCP server**](docs/modelcontextprotocol-io/quickstart.mdx) | [**⚡️ Live API docs**](https://registry.modelcontextprotocol.io/docs) | [**👀 Ecosystem vision**](docs/design/ecosystem-vision.md) | 📖 **[Full documentation](./docs)**
 
-Access Avalanche blockchain documentation, search tools, and AI assistance directly in VS Code's Copilot agent mode.
+## Development Status
 
-## Features
+**2025-10-24 update**: The Registry API has entered an **API freeze (v0.1)** 🎉. For the next month or more, the API will remain stable with no breaking changes, allowing integrators to confidently implement support. This freeze applies to v0.1 while development continues on v0. We'll use this period to validate the API in real-world integrations and gather feedback to shape v1 for general availability. Thank you to everyone for your contributions and patience—your involvement has been key to getting us here!
 
-This extension provides the official Avalanche MCP Server integration, enabling AI assistants like GitHub Copilot to:
+**2025-09-08 update**: The registry has launched in preview 🎉 ([announcement blog post](https://blog.modelcontextprotocol.io/posts/2025-09-08-mcp-registry-preview/)). While the system is now more stable, this is still a preview release and breaking changes or data resets may occur. A general availability (GA) release will follow later. We'd love your feedback in [GitHub discussions](https://github.com/modelcontextprotocol/registry/discussions/new?category=ideas) or in the [#registry-dev Discord](https://discord.com/channels/1358869848138059966/1369487942862504016) ([joining details here](https://modelcontextprotocol.io/community/communication)).
 
-- 🔍 **Search Documentation** - Find relevant Avalanche docs, guides, and tutorials
-- 📄 **Fetch Pages** - Retrieve specific documentation pages for context
-- 📚 **Browse Sections** - List all available documentation sections with page counts
+Current key maintainers:
+- **Adam Jones** (Anthropic) [@domdomegg](https://github.com/domdomegg)  
+- **Tadas Antanavicius** (PulseMCP) [@tadasant](https://github.com/tadasant)
+- **Toby Padilla** (GitHub) [@toby](https://github.com/toby)
+- **Radoslav (Rado) Dimitrov** (Stacklok) [@rdimitrov](https://github.com/rdimitrov)
 
-## Available MCP Tools
+## Contributing
 
-| Tool | Description |
-|------|-------------|
-| `avalanche_docs_search` | Search docs by query with optional source filter (docs, academy, integrations, blog) |
-| `avalanche_docs_fetch` | Get a specific page by URL path |
-| `avalanche_docs_list_sections` | List all sections with page counts |
+We use multiple channels for collaboration - see [modelcontextprotocol.io/community/communication](https://modelcontextprotocol.io/community/communication).
 
-## Usage
+Often (but not always) ideas flow through this pipeline:
 
-1. Install this extension from the VS Code Marketplace
-2. Open GitHub Copilot Chat (`Ctrl+Shift+I` or `Cmd+Shift+I`)
-3. Switch to **Agent Mode** using the mode picker
-4. The Avalanche MCP tools will be available for the AI to use
+- **[Discord](https://modelcontextprotocol.io/community/communication)** - Real-time community discussions
+- **[Discussions](https://github.com/modelcontextprotocol/registry/discussions)** - Propose and discuss product/technical requirements
+- **[Issues](https://github.com/modelcontextprotocol/registry/issues)** - Track well-scoped technical work  
+- **[Pull Requests](https://github.com/modelcontextprotocol/registry/pulls)** - Contribute work towards issues
 
-### Example Prompts
+### Quick start:
 
-- "Search Avalanche docs for how to create an L1"
-- "Find documentation about smart contracts on Avalanche"
-- "Get the overview page for Avalanche primary network"
-- "List all available documentation sections"
+#### Pre-requisites
 
-## Requirements
+- **Docker**
+- **Go 1.24.x**
+- **ko** - Container image builder for Go ([installation instructions](https://ko.build/install/))
+- **golangci-lint v2.4.0**
 
-- VS Code 1.85.0 or later
-- GitHub Copilot extension (for agent mode)
-
-## MCP Server Details
-
-- **Endpoint**: `https://build.avax.network/api/mcp`
-- **Transport**: HTTP (Streamable)
-- **Protocol**: JSON-RPC 2.0
-
-## Resources
-
-- [Avalanche MCP Documentation](https://build.avax.network/docs/tooling/ai-llm)
-- [Avalanche Builder Hub](https://build.avax.network/)
-- [Model Context Protocol](https://modelcontextprotocol.io/)
-
-## Alternative Setup Methods
-
-### Claude Desktop
-
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "avalanche-docs": {
-      "transport": {
-        "type": "http",
-        "url": "https://build.avax.network/api/mcp"
-      }
-    }
-  }
-}
-```
-
-### Claude Code
+#### Running the server
 
 ```bash
-claude mcp add avalanche-docs --transport http https://build.avax.network/api/mcp
+# Start full development environment
+make dev-compose
 ```
 
-### Manual VS Code Configuration
+This starts the registry at [`localhost:8080`](http://localhost:8080) with PostgreSQL. The database uses ephemeral storage and is reset each time you restart the containers, ensuring a clean state for development and testing.
 
-Add to `.vscode/mcp.json`:
+**Note:** The registry uses [ko](https://ko.build) to build container images. The `make dev-compose` command automatically builds the registry image with ko and loads it into your local Docker daemon before starting the services.
 
-```json
-{
-  "servers": {
-    "avalanche-docs": {
-      "transport": {
-        "type": "http",
-        "url": "https://build.avax.network/api/mcp"
-      }
-    }
-  }
-}
+By default, the registry seeds from the production API with a filtered subset of servers (to keep startup fast). This ensures your local environment mirrors production behavior and all seed data passes validation. For offline development you can seed from a file without validation with `MCP_REGISTRY_SEED_FROM=data/seed.json MCP_REGISTRY_ENABLE_REGISTRY_VALIDATION=false make dev-compose`.
+
+The setup can be configured with environment variables in [docker-compose.yml](./docker-compose.yml) - see [.env.example](./.env.example) for a reference.
+
+<details>
+<summary>Alternative: Running a pre-built Docker image</summary>
+
+Pre-built Docker images are automatically published to GitHub Container Registry:
+
+```bash
+# Run latest stable release
+docker run -p 8080:8080 ghcr.io/modelcontextprotocol/registry:latest
+
+# Run latest from main branch (continuous deployment)
+docker run -p 8080:8080 ghcr.io/modelcontextprotocol/registry:main
+
+# Run specific release version
+docker run -p 8080:8080 ghcr.io/modelcontextprotocol/registry:v1.0.0
+
+# Run development build from main branch
+docker run -p 8080:8080 ghcr.io/modelcontextprotocol/registry:main-20250906-abc123d
 ```
 
-## Rate Limits
+**Available tags:** 
+- **Releases**: `latest`, `v1.0.0`, `v1.1.0`, etc.
+- **Continuous**: `main` (latest main branch build)
+- **Development**: `main-<date>-<sha>` (specific commit builds)
 
-- 60 requests per minute per client
-- RateLimit headers included in responses
+</details>
 
-## License
+#### Publishing a server
 
-MIT License - see [LICENSE](LICENSE) for details.
+To publish a server, we've built a simple CLI. You can use it with:
 
-## About Avalanche
+```bash
+# Build the latest CLI
+make publisher
 
-[Avalanche](https://www.avax.network/) is a high-performance, scalable blockchain platform for decentralized applications, enterprise blockchain deployments, and custom blockchain networks (L1s).
+# Use it!
+./bin/mcp-publisher --help
+```
 
----
+See [the publisher guide](./docs/modelcontextprotocol-io/quickstart.mdx) for more details.
 
-Built with ❤️ by the Avalanche community
+#### Other commands
+
+```bash
+# Run lint, unit tests and integration tests
+make check
+```
+
+There are also a few more helpful commands for development. Run `make help` to learn more, or look in [Makefile](./Makefile).
+
+<!--
+For Claude and other AI tools: Always prefer make targets over custom commands where possible.
+-->
+
+## Architecture
+
+### Project Structure
+
+```
+├── cmd/                     # Application entry points
+│   └── publisher/           # Server publishing tool
+├── data/                    # Seed data
+├── deploy/                  # Deployment configuration (Pulumi)
+├── docs/                    # Documentation
+├── internal/                # Private application code
+│   ├── api/                 # HTTP handlers and routing
+│   ├── auth/                # Authentication (GitHub OAuth, JWT, namespace blocking)
+│   ├── config/              # Configuration management
+│   ├── database/            # Data persistence (PostgreSQL)
+│   ├── service/             # Business logic
+│   ├── telemetry/           # Metrics and monitoring
+│   └── validators/          # Input validation
+├── pkg/                     # Public packages
+│   ├── api/                 # API types and structures
+│   │   └── v0/              # Version 0 API types
+│   └── model/               # Data models for server.json
+├── scripts/                 # Development and testing scripts
+├── tests/                   # Integration tests
+└── tools/                   # CLI tools and utilities
+    └── validate-*.sh        # Schema validation tools
+```
+
+### Authentication
+
+Publishing supports multiple authentication methods:
+- **GitHub OAuth** - For publishing by logging into GitHub
+- **GitHub OIDC** - For publishing from GitHub Actions
+- **DNS verification** - For proving ownership of a domain and its subdomains
+- **HTTP verification** - For proving ownership of a domain
+
+The registry validates namespace ownership when publishing. E.g. to publish...:
+- `io.github.domdomegg/my-cool-mcp` you must login to GitHub as `domdomegg`, or be in a GitHub Action on domdomegg's repos
+- `me.adamjones/my-cool-mcp` you must prove ownership of `adamjones.me` via DNS or HTTP challenge
+
+## Community Projects
+
+Check out [community projects](docs/community-projects.md) to explore notable registry-related work created by the community.
+
+## More documentation
+
+See the [documentation](./docs) for more details if your question has not been answered here!
