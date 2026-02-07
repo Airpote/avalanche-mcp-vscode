@@ -29,14 +29,15 @@ let serverDefinitionProvider;
 function activate(context) {
     console.log('Avalanche MCP Server extension is now active');
 
-    // Create the MCP server definition with streamable-http transport
+    // Create the MCP server definition with http transport
+    // Using 'uri' property as expected by VS Code MCP API
     const avalancheMcpServer = {
         name: 'avalanche-docs',
         label: 'Avalanche Documentation',
         version: '1.0.0',
         transport: {
-            type: 'streamable-http',
-            url: 'https://build.avax.network/api/mcp'
+            type: 'http',
+            uri: 'https://build.avax.network/api/mcp'
         }
     };
 
