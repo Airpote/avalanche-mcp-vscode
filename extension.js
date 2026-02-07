@@ -21,7 +21,7 @@ const vscode = require('vscode');
  * @see https://build.avax.network/docs/tooling/ai-llm
  */
 
-let serverDefinitionProvider;
+const MCP_SERVER_URL = 'https://build.avax.network/api/mcp';
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -29,64 +29,62 @@ let serverDefinitionProvider;
 function activate(context) {
     console.log('Avalanche MCP Server extension is now active');
 
-    // Create the MCP server definition with http transport
-    // Using 'uri' property as expected by VS Code MCP API
-    const avalancheMcpServer = {
-        name: 'avalanche-docs',
-        label: 'Avalanche Documentation',
-        version: '1.0.0',
-        transport: {
-            type: 'http',
-            uri: 'https://build.avax.network/api/mcp'
-        }
-    };
-
-    // Event emitter for server definition changes
-    const onDidChangeMcpServerDefinitions = new vscode.EventEmitter();
-
-    // Register the MCP server definition provider
-    serverDefinitionProvider = vscode.lm.registerMcpServerDefinitionProvider(
-        'avalanche-mcp',
-        {
-            onDidChangeMcpServerDefinitions: onDidChangeMcpServerDefinitions.event,
-            
-            provideMcpServerDefinitions: async () => {
-                return [avalancheMcpServer];
-            },
-            
-            resolveMcpServerDefinition: async (serverDefinition) => {
-                // No additional resolution needed for HTTP transport
-                return serverDefinition;
-            }
-        }
-    );
-
-    context.subscriptions.push(serverDefinitionProvider);
-    context.subscriptions.push(onDidChangeMcpServerDefinitions);
-
-    // Register a command to show information about the Avalanche MCP server
+    // Register info command
     const infoCommand = vscode.commands.registerCommand('avalanche-mcp.showInfo', () => {
         vscode.window.showInformationMessage(
-            'Avalanche MCP Server provides access to Avalanche blockchain documentation. ' +
-            'Use it in Copilot agent mode to search docs, fetch pages, and explore Avalanche development resources.',
-            'Open Documentation'
+            `Avalanche MCP Server: ${MCP_SERVER_URL}\n\nUse with GitHub Copilot to access Avalanche documentation.`,
+            'Open Docs',
+            'Copy URL'
         ).then(selection => {
-            if (selection === 'Open Documentation') {
+            if (selection === 'Open Docs') {
                 vscode.env.openExternal(vscode.Uri.parse('https://build.avax.network/docs/tooling/ai-llm'));
+            } else if (selection === 'Copy URL') {
+                vscode.env.clipboard.writeText(MCP_SERVER_URL);
+                vscode.window.showInformationMessage('MCP URL copied to clipboard!');
+            }
+        });
+    });
+
+    // Register configure command to add MCP server to settings
+    const configureCommand = vscode.commands.registerCommand('avalanche-mcp.configure', async () => {
+        const config = vscode.workspace.getConfiguration('mcp');
+        const servers = config.get('servers') || {};
+        
+        if (servers['avalanche-docs']) {
+            vscode.window.showInformationMessage('Avalanche MCP server is already configured.');
+            return;
+        }
+        
+        servers['avalanche-docs'] = {
+            url: MCP_SERVER_URL,
+            transport: 'http'
+        };
+        
+        await config.update('servers', servers, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(
+            'Avalanche MCP server added to your settings! Reload VS Code to activate.',
+            'Reload'
+        ).then(selection => {
+            if (selection === 'Reload') {
+                vscode.commands.executeCommand('workbench.action.reloadWindow');
             }
         });
     });
 
     context.subscriptions.push(infoCommand);
+    context.subscriptions.push(configureCommand);
 
-    // Show welcome message on first activation
+    // Welcome message on first activation
     const hasShownWelcome = context.globalState.get('avalanche-mcp.welcomeShown');
     if (!hasShownWelcome) {
         vscode.window.showInformationMessage(
-            'Avalanche MCP Server installed! Enable it in Copilot agent mode to access Avalanche documentation.',
+            'Avalanche MCP installed! Add the MCP server to your settings to use with GitHub Copilot.',
+            'Configure Now',
             'Learn More'
         ).then(selection => {
-            if (selection === 'Learn More') {
+            if (selection === 'Configure Now') {
+                vscode.commands.executeCommand('avalanche-mcp.configure');
+            } else if (selection === 'Learn More') {
                 vscode.env.openExternal(vscode.Uri.parse('https://build.avax.network/docs/tooling/ai-llm'));
             }
         });
@@ -95,9 +93,7 @@ function activate(context) {
 }
 
 function deactivate() {
-    if (serverDefinitionProvider) {
-        serverDefinitionProvider.dispose();
-    }
+    // Nothing to dispose
 }
 
 module.exports = {
